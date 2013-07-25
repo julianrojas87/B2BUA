@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project default="all" name="B2BUA">
+    <target name="init">
+        <path id="slee">
+            <pathelement location="lib/slee.jar"/>
+        </path>
+        <taskdef classname="org.mobicents.eclipslee.ant.SbbJar"
+            classpath="lib/slee-tasks.jar" name="sbbjar"/>
+        <taskdef classname="org.mobicents.eclipslee.ant.EventJar"
+            classpath="lib/slee-tasks.jar" name="eventjar"/>
+        <taskdef classname="org.mobicents.eclipslee.ant.ProfileSpecJar"
+            classpath="lib/slee-tasks.jar" name="profilespecjar"/>
+        <taskdef classname="org.mobicents.eclipslee.ant.DeployableJar"
+            classpath="lib/slee-tasks.jar" name="deployablejar"/>
+        <taskdef
+            classname="org.mobicents.eclipslee.ant.ResourceAdaptorTypeJar"
+            classpath="lib/slee-tasks.jar" name="resourceadaptortypejar"/>
+        <taskdef
+            classname="org.mobicents.eclipslee.ant.ResourceAdaptorJar"
+            classpath="lib/slee-tasks.jar" name="resourceadaptorjar"/>
+        <path id="ExternalComponents">
+            <pathelement location="lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/jain-sip-api-1.2.jar"/>
+            <pathelement location="lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/jain-sip-ri-1.2.162.jar"/>
+            <pathelement location="lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/sip11-events-2.4.1.FINAL.jar"/>
+            <pathelement location="lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/sip11-library-2.4.1.FINAL.jar"/>
+            <pathelement location="lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/sip11-ra-2.4.1.FINAL.jar"/>
+            <pathelement location="lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/sip11-ratype-2.4.1.FINAL.jar"/>
+            <pathelement location="/home/julian/Telcomp-Workspace/Registrar/jars/DataBase-sbb.jar"/>
+        </path>
+        <path id="path-B2B-sbb">
+            <pathelement location="/home/julian/Telcomp-Workspace/B2BUA/lib/DU/sip11-ra-DU-2.4.1.FINAL-Eclipslee.jar/jars/sip11-events-2.4.1.FINAL.jar"/>
+        </path>
+    </target>
+    <target depends="init" name="all">
+        <ant target="build-B2B-sbb"/>
+        <ant target="build-DataBase-sbb"/>
+        <ant target="build-b2bua-DU"/>
+    </target>
+    <target depends="init" name="clean">
+        <ant target="clean-B2B-sbb"/>
+        <ant target="clean-DataBase-sbb"/>
+        <ant target="clean-b2bua-DU"/>
+    </target>
+    <target depends="init" name="build-B2B-sbb">
+        <mkdir dir="classes/B2B-sbb"/>
+        <mkdir dir="jars/"/>
+        <javac destdir="classes/B2B-sbb" includeantruntime="false"
+            includes="org/uao/sbb/B2BSbb.java" srcdir="src">
+            <classpath>
+                <path refid="path-B2B-sbb"/>
+                <path refid="ExternalComponents"/>
+                <path refid="slee"/>
+            </classpath>
+        </javac>
+        <sbbjar classpath="classes/B2B-sbb" destfile="jars/B2B-sbb.jar" sbbjarxml="src/org/uao/sbb/B2B-sbb-jar.xml"/>
+    </target>
+    <target name="clean-B2B-sbb">
+        <delete file="jars/B2B-sbb.jar"/>
+        <delete dir="classes/B2B-sbb"/>
+    </target>
+    <target depends="init" name="build-DataBase-sbb">
+        <mkdir dir="classes/DataBase-sbb"/>
+        <mkdir dir="jars/"/>
+        <javac destdir="classes/DataBase-sbb" includeantruntime="false"
+            includes="org/uao/sbb/DataBaseSbb.java,org/uao/sbb/DataBaseSbbLocalObject.java,org/uao/data/UserinfoDao.java,
+            org/uao/data/Usersinfo.java,org/uao/data/NotFoundException.java,org/uao/data/UsersInfoManager.java" srcdir="src">
+            <classpath>
+                <path refid="ExternalComponents"/>
+                <path refid="slee"/>
+            </classpath>
+        </javac>
+        <copy file="src/org/uao/sbb/DataBase-sbb-jar.xml" tofile="classes/DataBase-sbb/sbb-jar.xml"/>
+    	<jar basedir="classes/DataBase-sbb" destfile="jars/DataBase-sbb.jar" includes="org/uao/sbb/*.class,org/uao/data/*.class">
+    		<metainf dir="classes/DataBase-sbb" includes="sbb-jar.xml"/>
+    	</jar>
+    </target>
+    <target name="clean-DataBase-sbb">
+        <delete file="jars/DataBase-sbb.jar"/>
+        <delete dir="classes/DataBase-sbb"/>
+    </target>
+    <target depends="build-B2B-sbb" name="build-b2bua-DU">
+        <mkdir dir="classes/b2bua-DU"/>
+        <copy file="src/org/uao/service/b2bua-deployable-unit.xml" tofile="classes/b2bua-DU/deployable-unit.xml"/>
+        <jar jarfile="jars/b2bua-DU.jar">
+            <metainf dir="classes/b2bua-DU" includes="deployable-unit.xml"/>
+            <fileset dir="" includes="jars/B2B-sbb.jar"/>
+            <fileset dir="" includes="jars/DataBase-sbb.jar"/>
+            <fileset dir="." includes="src/org/uao/service/b2bua-service.xml"/>
+        </jar>
+    </target>
+    <target name="clean-b2bua-DU">
+        <delete file="jars/b2bua-DU.jar"/>
+        <delete dir="classes/b2bua-DU"/>
+    </target>
+</project>
